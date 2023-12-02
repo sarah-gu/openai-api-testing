@@ -3,35 +3,51 @@
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import {openai} from "./openai"; 
 
-const fetchOpenAIResponse = async ({prompt, setApiResponse, setLoading}: {prompt: string, setApiResponse: Dispatch<SetStateAction<string>>, setLoading: Dispatch<SetStateAction<boolean>>}) => {
-	try {
-	  const result = await openai.completions.create({
-		model: 'gpt-3.5-turbo-instruct',
-		prompt: prompt + " Reply only with one word: 'Yes' or 'No'. Never return an output with more than one word.",
-	  });
-	  console.log(result); 
-	  setApiResponse(result.choices[0].text);
-	} catch (error) {
-	  // Handle the error
-	  console.error(error);
-	  setApiResponse("Something is going wrong. Please try again.");
-	}
-	setLoading(false);
-  };
+// const fetchOpenAIResponse = async ({prompt, setApiResponse, setLoading}: {prompt: string, setApiResponse: Dispatch<SetStateAction<string>>, setLoading: Dispatch<SetStateAction<boolean>>}) => {
+// 	try {
+// 	//   const result = await openai.chat.completions.create({
+// 	// 	messages: [{"role": "system", "content": "You are a helpful assistant."},
+//     //     {"role": "user", "content": "Did the Los Angeles Dodgers win the world series in 2020?"},
+//     //     {"role": "assistant", "content": "Yes."},
+//     //     {"role": "user", "content": prompt}],
+//     // 	model: "gpt-4",
+// 	//   });
+
+// 	  console.log(result); 
+// 	  setApiResponse(result.data[0].url ?? "error");
+// 	} catch (error) {
+// 	  // Handle the error
+// 	  console.error(error);
+// 	  setApiResponse("Something is going wrong. Please try again.");
+// 	}
+// 	setLoading(false);
+//    };
 
 export default function Home() {
 	const [prompt, setPrompt] = useState("");
 	const [apiResponse, setApiResponse] = useState("");
 	const [loading, setLoading] = useState(false);
 
-	// useEffect(() => {
-	// 	if (loading) {
-	// 	  fetchOpenAIResponse({prompt, setApiResponse, setLoading});
-	// 	}
-	//   }, [loading, prompt]);
 
-	const handleSubmit = () => {
-		setLoading(true);
+	const handleSubmit = async () => {
+		if(prompt){
+			try{
+				setLoading(true);
+				const response = await fetch("/api/fortune?prompt=" + encodeURIComponent(prompt));
+				const body = await response.json();
+				console.log(body.quote);
+
+				setApiResponse(body.quote); 
+			}
+			catch (error) {
+				console.error(error);
+				setApiResponse("Something is going wrong. Please try again.");
+			}
+			finally{
+				setLoading(false);
+			}
+		}
+
 	  };
 
   	return (
@@ -43,12 +59,11 @@ export default function Home() {
 				<button type="button" onClick={handleSubmit} className = "w-24 h-16 border-1 p-4 border border-black rounded-lg bg-gray-200">Ask</button>
 			</div>
 
-			{/* {apiResponse && (
+			{apiResponse && (
        			<div className="flex flex-col justify-center items-center w-96">
 					<div className = "text-3xl text-bold">{apiResponse}</div>
 				</div>
-			)} */}
-			<div>what ??? {prompt}</div>
+			)}
 			{loading && (<div className="m-4">Loading...</div>)}
 		</div>
  	)
